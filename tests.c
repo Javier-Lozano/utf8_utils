@@ -4,35 +4,52 @@
 
 int main()
 {
-	char *str = "AEIOUÁÉÍÓÚ";
+	char *str = "AEIOUÁÉÍÓÚ\xFF";
+	char utf8_char[5] = {0};
 	int len = strlen(str);
 	int utf8_len = utf8_strlen(str);
 
-	// utf8_strlen()
-	//printf("\nUTF-8 string length\n");
-	printf("\n\n");
+	printf("String Length.\n\n");
+	
+	printf("String: \"%s\"\n", str);
+	printf("\tRaw string length: %d\n", strlen(str));
+	printf("\tUTF-8 string length: %d\n", utf8_strlen(str));
 
-	printf("String (%p): \"%s\"\n\tRaw string length: %d\n\tDecoded UTF-8 length: %d\n", str, str, strlen(str), utf8_strlen(str));
-
-	// utf8_count_bits()
-	//printf("\nCounting consecutive \"1\" bits from most significative to least significative.\n");
 	printf("\n\n");
+	printf("Character Analisis.\n\n");
 
 	for(size_t i = 0; str[i]; i++)
 	{
-		printf("Index: %d\t-> Value: %X\t-> Info: ", i, (uint8_t)str[i]);
+		printf("Index: %d:\n", i);
+		printf("\tByte: 0x%X\n", (uint8_t)str[i]);
 
 		int bits = utf8_count_bits((uint8_t)str[i]);
-		printf("(%d bits) ", bits);
-		if (bits == 0) printf("ASCII\n");
-		else if (bits == 1) printf("UTF-8 Data Byte\n");
-		else if (bits > 1 && bits < 5) printf("UTF-8 Initial Byte\n");
-		else printf("Not a character.\n");
+		switch (bits)
+		{
+		case 0:
+			printf("\tCharacter: %c\n", str[i]);
+			printf("\tInfo: ASCII character.\n");
+			break;
+		case 1:
+			utf8_retrieve_character(str, i, utf8_char, 5);
+			printf("\tCharacter: %s\n", utf8_char);
+			printf("\tInfo: The byte is part of an UTF-8 character.\n");
+			break;
+		case 2:
+		case 3:
+		case 4:
+			utf8_retrieve_character(str, i, utf8_char, 5);
+			printf("\tCharacter: %s\n", utf8_char);
+			printf("\tInfo: First byte from an UTF-8 character.\n");
+			break;
+		default:
+			printf("\tThis byte doesn't represent a character!\n");
+			break;
+		}
 	}
 
-	// utf8_map_to_uint32()
-	//printf("\nMap String to Uint32.\n");
 	printf("\n\n");
+	printf("Mapping UTF-8 characters to uint32.\n\n");
 
 	size_t map_length = utf8_strlen(str);
 	uint32_t *map = utf8_map_to_uint32(str, NULL);
