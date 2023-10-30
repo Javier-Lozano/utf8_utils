@@ -5,51 +5,79 @@
 /// @return Count of characters from the string
 size_t utf8_strlen(const char *str)
 {
-	const uint8_t *s = NULL;
 	size_t len = 0;
+	unsigned char ch = 0;
 
-	if (str == NULL) { return 0; }
-	
-	s = (const uint8_t *)str;
-
-	for (size_t i = 0; s[i]; i++)
+	while(ch = *(str++))
 	{
-		if ((s[i] > 0xC1 && s[i] < 0xF5) || s[i] < 0x80) { len++; }
+		if ((ch > 0xC1 && ch < 0xF5) || ch < 0x80) { len++; }
 	}
+
+	/*
+	for (size_t i = 0; str[i]; i++)
+	{
+		ch = str[i];
+		if ((ch > 0xC1 && ch < 0xF5) || ch < 0x80) { len++; }
+	}
+	*/
 	
 	return len;
-
 }
 
-/// @brief Count the number of consecutive "1" bits from the most significant to the least significant position until finding a "0" bit or running through the entire byte.
-/// @param s The byte to run through
-/// @return Number of consecutive ON bits
-uint8_t utf8_count_bits(const uint8_t c)
+/// @brief Count the number of consecutive set (1) bits from a byte. The count starts from the most significant bit then the byte is shifted left until reaching an unset (0) bit. This function helps to identify the given byte as an ASCII character, an UTF-8 starting byte or an UTF-8 continuation byte.
+/// @param ch An unsigned character byte to analyze
+/// @return Number of consecutive set bits
+uint8_t utf8_count_bits(unsigned char ch)
 {
-	uint8_t bytes = 0;
-	for (uint8_t check = 0x80; c & check; check = check >> 1, bytes++);
+	unsigned char bytes = 0;
+	while(ch & 0x80)
+	{
+		bytes++;
+		ch = (ch << 1);
+	}
+
+	// for (unsigned char check = 0x80; c & check; check = check >> 1, bytes++);
+	
 	return bytes;
 }
 
-/// @brief Maps every character from a string to an 32-bit unsigned integer array
+/// @brief Maps every character from a string to an 32 bits unsigned integer array
 /// @param str Pointer to a string
 /// @param map_length A pointer to fill in the map's length
 /// @return An array of integers representing every valid UTF-8 character on the string
 uint32_t *utf8_map_to_uint32(const char *str, size_t *map_length)
 {
-	const uint8_t *s = NULL;
+	unsigned char ch = 0;
 	uint32_t *map = NULL;
 	size_t map_len = 0;
 	size_t map_index = 0;
 
 	if (str == NULL) { return 0; }
 
-	s = (const uint8_t *)str;
-
 	map_len = utf8_strlen(str);
 	map = (uint32_t*)calloc(map_len, sizeof(uint32_t));
 
-	for (size_t i = 0; s[i]; i++)
+	while(ch = *(str++))
+	{
+		if (ch > 0xC1 && ch < 0xF5)
+		{
+			map[map_index] = ch;
+			while( ((ch = *(str++)) & 0xC0) == 0x80)
+			{
+				map[map_index] = (map[map_index] << 8) | ch;
+			}
+			map_index++;
+			str--;
+		}
+		else if (ch < 0x80)	// ASCII character
+		{
+			map[map_index] = ch;
+			map_index++;
+		}
+	}
+
+	/*
+	for (size_t i = 0; str[i]; i++)
 	{
 		if (s[i] > 0xC1 && s[i] < 0xF5) // UTF-8 starting byte
 		{
@@ -66,6 +94,7 @@ uint32_t *utf8_map_to_uint32(const char *str, size_t *map_length)
 			map_index++;
 		}
 	}
+	*/
 
 	if (map_length != NULL) { *map_length = map_len; }
 

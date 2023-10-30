@@ -4,7 +4,7 @@
 
 int main()
 {
-	char *str = "AEIOUÁÉÍÓÚ\xFF";
+	char *str = "AEIOUÁÉÍÓÚ\xFFá";
 	char utf8_char[5] = {0};
 	int len = strlen(str);
 	int utf8_len = utf8_strlen(str);
@@ -33,14 +33,14 @@ int main()
 		case 1:
 			utf8_retrieve_character(str, i, utf8_char, 5);
 			printf("\tCharacter: %s\n", utf8_char);
-			printf("\tInfo: The byte is part of an UTF-8 character.\n");
+			printf("\tInfo: This is an UTF-8 continuation byte.\n");
 			break;
 		case 2:
 		case 3:
 		case 4:
 			utf8_retrieve_character(str, i, utf8_char, 5);
 			printf("\tCharacter: %s\n", utf8_char);
-			printf("\tInfo: First byte from an UTF-8 character.\n");
+			printf("\tInfo: Staring byte of an UTF-8 character.\n");
 			break;
 		default:
 			printf("\tThis byte doesn't represent a character!\n");
