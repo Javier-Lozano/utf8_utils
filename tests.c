@@ -52,7 +52,7 @@ int main()
 	printf("Mapping UTF-8 characters to uint32.\n\n");
 
 	size_t map_length = utf8_strlen(str);
-	uint32_t *map = utf8_map_to_uint32(str, NULL);
+	uint32_t *map = utf8_map_to_uint32(str);
 	for (size_t i = 0; i < map_length; i++)
 	{
 		printf("Index: %d -> Value: %X\n", i, map[i]);

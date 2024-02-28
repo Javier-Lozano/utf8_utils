@@ -6,20 +6,12 @@
 size_t utf8_strlen(const char *str)
 {
 	size_t len = 0;
-	unsigned char ch = 0;
+	const uint8_t *s = str;
 
-	while(ch = *(str++))
+	for(int i = 0; s[i]; i++)
 	{
-		if ((ch > 0xC1 && ch < 0xF5) || ch < 0x80) { len++; }
+		if ((s[i] > 0xC1 && s[i] < 0xF5) || s[i] < 0x80) { len++; }
 	}
-
-	/*
-	for (size_t i = 0; str[i]; i++)
-	{
-		ch = str[i];
-		if ((ch > 0xC1 && ch < 0xF5) || ch < 0x80) { len++; }
-	}
-	*/
 	
 	return len;
 }
@@ -45,48 +37,29 @@ uint8_t utf8_count_bits(unsigned char ch)
 /// @param str Pointer to a string
 /// @param map_length A pointer to fill in the map's length
 /// @return An array of integers representing every valid UTF-8 character on the string
-uint32_t *utf8_map_to_uint32(const char *str, size_t *map_length)
+uint32_t *utf8_map_to_uint32(const char *str)
 {
-	unsigned char ch = 0;
+	const uint8_t *s = str;
 	uint32_t *map = NULL;
 	size_t map_len = 0;
 	size_t map_index = 0;
 
-	if (str == NULL) { return 0; }
-
 	map_len = utf8_strlen(str);
+	if (map_len == 0) { return NULL; }
+
 	map = (uint32_t*)calloc(map_len, sizeof(uint32_t));
 
-	while(ch = *(str++))
+	for(int i = 0; s[i]; i++)
 	{
-		if (ch > 0xC1 && ch < 0xF5)
+		if (s[i] > 0xC1 && s[i] < 0xF5)
 		{
-			map[map_index] = ch;
-			while( ((ch = *(str++)) & 0xC0) == 0x80)
+			map[map_index] = s[i];
+			while ((s[++i] & 0xC0) == 0x80)
 			{
-				map[map_index] = (map[map_index] << 8) | ch;
+				map[map_index] = (map[map_index] << 8) | s[i];
 			}
 			map_index++;
-			str--;
-		}
-		else if (ch < 0x80)	// ASCII character
-		{
-			map[map_index] = ch;
-			map_index++;
-		}
-	}
-
-	/*
-	for (size_t i = 0; str[i]; i++)
-	{
-		if (s[i] > 0xC1 && s[i] < 0xF5) // UTF-8 starting byte
-		{
-			uint8_t bytes = utf8_count_bits(s[i]);
-			for (uint8_t b = 0; b < bytes; b++)
-			{
-				map[map_index] = map[map_index] << 8 | s[i + b];
-			}
-			map_index++;
+			i--;
 		}
 		else if (s[i] < 0x80)	// ASCII character
 		{
@@ -94,9 +67,6 @@ uint32_t *utf8_map_to_uint32(const char *str, size_t *map_length)
 			map_index++;
 		}
 	}
-	*/
-
-	if (map_length != NULL) { *map_length = map_len; }
 
 	return map;
 }
